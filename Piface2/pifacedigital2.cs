@@ -21,14 +21,12 @@ namespace Piface2ControlCore
         public const byte LED6 = 0x0E; // MCP23x17 Input Polarity Register
         public const byte LED7 = 0x0F; // 0 = Normal (default)(low reads as 0), 1 = Inverted (low reads as 1)
 
-        public const byte Sw0 = IN0; // I/O Direction Register
-        public const byte Sw1 = IN1; // 1 = Input (default), 0 = Output
-        public const byte Sw2 = IN2; // MCP23x17 Input Polarity Register
-        public const byte Sw3 = IN3; // 0 = Normal (default)(low reads as 0), 1 = Inverted (low reads as 1)
+        public const byte SW0 = IN0; // I/O Direction Register
+        public const byte SW1 = IN1; // 1 = Input (default), 0 = Output
+        public const byte SW2 = IN2; // MCP23x17 Input Polarity Register
+        public const byte SW3 = IN3; // 0 = Normal (default)(low reads as 0), 1 = Inverted (low reads as 1)
 
         public const byte RelayA = LED1; // MCP23x17 Input Polarity Register
         public const byte RelayB = LED0; // 0 = Normal (default)(low reads as 0), 1 = Inverted (low reads as 1)
-
-        public static byte[] LedAdress = new[] { LED0, LED1, LED2, LED3, LED4, LED5, LED6, LED7 };
     }
 }

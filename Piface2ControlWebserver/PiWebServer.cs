@@ -19,17 +19,18 @@ namespace Piface2ControlWebserver
 
         private StreamSocketListener listener; // the socket listner to listen for TCP requests
                                                // Note: this has to stay in scope!
+        private static byte[] LedAdress = new[] { PiFaceDigital2.LED0, PiFaceDigital2.LED1, PiFaceDigital2.LED2, PiFaceDigital2.LED3, PiFaceDigital2.LED4, PiFaceDigital2.LED5, PiFaceDigital2.LED6, PiFaceDigital2.LED7 };
+        private static byte[] SwitchAdress = new[] { PiFaceDigital2.SW0, PiFaceDigital2.SW1, PiFaceDigital2.SW2, PiFaceDigital2.SW3};
 
         private const uint BufferSize = 8192; // this is the max size of the buffer in bytes 
         public PiWebServer()
         {
-
+            this.InitSPI();
         }
 
-        public void Initialise()
+        public void Start()
         {
             listener = new StreamSocketListener();
-
             listener.BindServiceNameAsync("1111");
 
             listener.ConnectionReceived += async (sender, args) =>
@@ -37,6 +38,22 @@ namespace Piface2ControlWebserver
                 // call the handle request function when a request comes in
                 HandleRequest(sender, args);
             };
+        }
+
+        private async void InitSPI()
+        {
+            try
+            {
+                await MCP23S17.InitSPI();
+
+                MCP23S17.InitMCP23S17();
+                MCP23S17.setPinMode(0x00FF); // 0x0000 = all outputs, 0xffff=all inputs, 0x00FF is PIFace Default
+                MCP23S17.pullupMode(0x00FF); // 0x0000 = no pullups, 0xffff=all pullups, 0x00FF is PIFace Default
+                MCP23S17.WriteWord(0x0000); // 0x0000 = no pullups, 0xffff=all pullups, 0x00FF is PIFace Default
+            }
+            catch (Exception ex)
+            {
+            }
         }
 
         public async void HandleRequest(StreamSocketListener sender, StreamSocketListenerConnectionReceivedEventArgs args)
@@ -117,11 +134,11 @@ namespace Piface2ControlWebserver
             string resultString = "XXXXXXX";
             if (int.TryParse(query[1], out targetLedNo) == true && targetLedNo < 8)
             {
-                MCP23S17.WritePin(PiFaceDigital2.LedAdress[targetLedNo],
-                    this.CheckLedStatus(PiFaceDigital2.LedAdress[targetLedNo]) == MCP23S17.On
+                MCP23S17.WritePin(LedAdress[targetLedNo],
+                    this.CheckLedStatus(LedAdress[targetLedNo]) == MCP23S17.On
                         ? MCP23S17.Off
                         : MCP23S17.On);
-                //MCP23S17.WritePin(PiFaceDigital2.LedAdress[targetLedNo], Convert.ToByte(query[1]));
+                //MCP23S17.WritePin(LedAdress[targetLedNo], Convert.ToByte(query[1]));
 
                 resultString = "ok";
             }
@@ -130,33 +147,36 @@ namespace Piface2ControlWebserver
 
         private string GetPiFaceStatus()
         {
-            UInt16 inputs = MCP23S17.ReadRegister16();
+            try
+            {
+                UInt16 inputs = MCP23S17.ReadRegister16();
 
-            JObject status = new JObject(
-                new JProperty("LED",
-                    new JArray(
-                        ((inputs & 1 << PiFaceDigital2.LED0) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.LED1) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.LED2) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.LED3) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.LED4) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.LED5) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.LED6) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.LED7) != 0) ? "on" : "off"
-                        )),
-                new JProperty("Button",
-                    new JArray(
-                        ((inputs & 1 << PiFaceDigital2.IN0) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.IN1) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.IN2) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.IN3) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.IN4) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.IN5) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.IN6) != 0) ? "on" : "off",
-                        ((inputs & 1 << PiFaceDigital2.IN7) != 0) ? "on" : "off"
-                        )));
+                JObject status = new JObject(
+                    new JProperty("LED",
+                        new JObject(
+                            new JProperty("0", ((inputs & 1 << PiFaceDigital2.LED0) != 0) ? "on" : "off"),
+                            new JProperty("1", ((inputs & 1 << PiFaceDigital2.LED1) != 0) ? "on" : "off"),
+                            new JProperty("2", ((inputs & 1 << PiFaceDigital2.LED2) != 0) ? "on" : "off"),
+                            new JProperty("3", ((inputs & 1 << PiFaceDigital2.LED3) != 0) ? "on" : "off"),
+                            new JProperty("4", ((inputs & 1 << PiFaceDigital2.LED4) != 0) ? "on" : "off"),
+                            new JProperty("5", ((inputs & 1 << PiFaceDigital2.LED5) != 0) ? "on" : "off"),
+                            new JProperty("6", ((inputs & 1 << PiFaceDigital2.LED6) != 0) ? "on" : "off"),
+                            new JProperty("7", ((inputs & 1 << PiFaceDigital2.LED7) != 0) ? "on" : "off")
+                            )),
+                    new JProperty("Switch",
+                        new JObject(
+                            new JProperty("0", ((inputs & 1 << PiFaceDigital2.SW0) == 0) ? "on" : "off"),
+                            new JProperty("1", ((inputs & 1 << PiFaceDigital2.SW1) == 0) ? "on" : "off"),
+                            new JProperty("2", ((inputs & 1 << PiFaceDigital2.SW2) == 0) ? "on" : "off"),
+                            new JProperty("3", ((inputs & 1 << PiFaceDigital2.SW3) == 0) ? "on" : "off")
+                            )));
 
-            return status.ToString();
+                return status.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "에러발생"+ex.ToString();
+            }
         }
 
         private string[] GetQuery(StringBuilder request)
@@ -167,7 +187,7 @@ namespace Piface2ControlWebserver
                               ? requestLines[1] : string.Empty;
 
             var uri = new Uri("http://localhost" + url);
-            var query = uri.AbsolutePath.Split('/');
+            var query = uri.AbsolutePath.Split("/".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             return query;
         }
 
@@ -177,8 +197,5 @@ namespace Piface2ControlWebserver
 
             return ((Inputs & 1 << led) != 0) ? MCP23S17.On : MCP23S17.Off;
         }
-
     }
-
-
 }
