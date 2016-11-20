@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="Scripts/jquery-3.1.1.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            var statusCheckInterval = 0;
+            isProcess = false;
+
+            $("#btnStartCheckStatus").click(function () {
+                if (statusCheckInterval === 0) {
+                    statusCheckInterval = setInterval(CheckStatusInterval, 10);
+                    $(this).text("stop");
+                    $("#btnCheckStatus").hide();
+                } else {
+                    clearInterval(statusCheckInterval);
+                    statusCheckInterval = 0;
+                    $(this).text("start");
+                    $("#btnCheckStatus").show();
+                }
+            });
+
+            $("button.led").click(function () {
+                $.ajax({
+                    url: "http://192.168.137.50:1111/ControlPiFaceLed/" + this.id.substr(3, 1),
+                    method: "POST",
+                    //dataType: "json",
+                    data: { led: this.id.substr(3, 1) }
+                }).done(function (msg) {
+                    console.log("상태 변경 성공");
+                    if (statusCheckInterval === 0)
+                        CheckStatus();
+                }).fail(function (j) {
+                    console.log("상태 변경 실패");
+                });
+            });
+        });
+
+        function CheckStatusInterval() {
+            if (!isProcess) {
+                isProcess = true;
+                CheckStatus();
+            }
+        }
+
+        function CheckStatus() {
+            console.log("CheckStatus");
+            $.ajax({
+                url: "http://" + $("#txtIp").val() + ":" + $("#txtPort").val() + "/GetPiFaceStatus/",
+                method: "POST",
+                dataType: "json"
+            }).done(function (result) {
+                console.log("상태확인 성공");
+                ParseStatusResult(result);
+            }).fail(function () {
+                console.log("상태확인 실패");
+            }).always(function () {
+                console.log("complete");
+                isProcess = false;
+            });
+        }
+
+        function ParseStatusResult(result) {
+            $.each(result, function (key, value) {
+                $.each(value, function (k, v) {
+                    if ($("#" + k).hasClass(v) === false) {
+                        $("#" + k).toggleClass("on").toggleClass("off");
+                    }
+                });
+            });
+        }
+    </script>
+    <style>
+        .led.on {
+            background-color: red;
+        }
+
+        .switch {
+            display: inline;
+            border-width: 2px;
+            border-style: solid;
+            padding: 10px;
+        }
+            .switch.on {
+                background-color: gray;
+            }
+    </style>
+</head>
+<body>
+    <div style="margin: 10px;">
+        IP Adress<input type="text" id="txtIp" value="192.168.137.50" /><br />
+        Webserver Port Adress<input type="text" id="txtPort" value="1111" />
+        <button type="button" id="btnStartCheckStatus">start</button>
+    </div>
+    <div>
+        <button type="button" id="LED0" class="led off">LED0</button>
+        <button type="button" id="LED1" class="led off">LED1</button>
+        <button type="button" id="LED2" class="led off">LED2</button>
+        <button type="button" id="LED3" class="led off">LED3</button>
+        <button type="button" id="LED4" class="led off">LED4</button>
+        <button type="button" id="LED5" class="led off">LED5</button>
+        <button type="button" id="LED6" class="led off">LED6</button>
+        <button type="button" id="LED7" class="led off">LED7</button>
+    </div>
+    <div style="margin-top: 20px">
+        <div class="switch off" id="SW0">Switch0</div>
+        <div class="switch off" id="SW1">Switch1</div>
+        <div class="switch off" id="SW2">Switch2</div>
+        <div class="switch off" id="SW3">Switch3</div>
+    </div>
+    <div style="margin-top: 20px">
+        <button type="button" id="btnCheckStatus" onclick="CheckStatus()">상태확인</button>
+    </div>
+    <div id="result">
+
+    </div>
+</body>
+</html>

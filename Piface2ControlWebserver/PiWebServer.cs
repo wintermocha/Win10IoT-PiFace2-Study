@@ -90,9 +90,9 @@ namespace Piface2ControlWebserver
 
                     // This is a standard HTTP header so the client browser knows the bytes returned are a valid http response
                     var header = "HTTP/1.1 200 OK\r\n" +
-                                $"Content-Length: {bodyStream.Length}\r\n" +
-                                    "Connection: close\r\n\r\n";
-
+                                 $"Content-Length: {bodyStream.Length}\r\n" +
+                                 "Access-Control-Allow-Origin: *\r\n" +
+                                 "Connection: close\r\n\r\n";     
                     byte[] headerArray = Encoding.UTF8.GetBytes(header);
 
                     // send the header with the body inclded to the client
@@ -132,6 +132,7 @@ namespace Piface2ControlWebserver
         {
             int targetLedNo;
             string resultString = "XXXXXXX";
+
             if (int.TryParse(query[1], out targetLedNo) == true && targetLedNo < 8)
             {
                 MCP23S17.WritePin(LedAdress[targetLedNo],
@@ -154,21 +155,21 @@ namespace Piface2ControlWebserver
                 JObject status = new JObject(
                     new JProperty("LED",
                         new JObject(
-                            new JProperty("0", ((inputs & 1 << PiFaceDigital2.LED0) != 0) ? "on" : "off"),
-                            new JProperty("1", ((inputs & 1 << PiFaceDigital2.LED1) != 0) ? "on" : "off"),
-                            new JProperty("2", ((inputs & 1 << PiFaceDigital2.LED2) != 0) ? "on" : "off"),
-                            new JProperty("3", ((inputs & 1 << PiFaceDigital2.LED3) != 0) ? "on" : "off"),
-                            new JProperty("4", ((inputs & 1 << PiFaceDigital2.LED4) != 0) ? "on" : "off"),
-                            new JProperty("5", ((inputs & 1 << PiFaceDigital2.LED5) != 0) ? "on" : "off"),
-                            new JProperty("6", ((inputs & 1 << PiFaceDigital2.LED6) != 0) ? "on" : "off"),
-                            new JProperty("7", ((inputs & 1 << PiFaceDigital2.LED7) != 0) ? "on" : "off")
+                            new JProperty("LED0", ((inputs & 1 << PiFaceDigital2.LED0) != 0) ? "on" : "off"),
+                            new JProperty("LED1", ((inputs & 1 << PiFaceDigital2.LED1) != 0) ? "on" : "off"),
+                            new JProperty("LED2", ((inputs & 1 << PiFaceDigital2.LED2) != 0) ? "on" : "off"),
+                            new JProperty("LED3", ((inputs & 1 << PiFaceDigital2.LED3) != 0) ? "on" : "off"),
+                            new JProperty("LED4", ((inputs & 1 << PiFaceDigital2.LED4) != 0) ? "on" : "off"),
+                            new JProperty("LED5", ((inputs & 1 << PiFaceDigital2.LED5) != 0) ? "on" : "off"),
+                            new JProperty("LED6", ((inputs & 1 << PiFaceDigital2.LED6) != 0) ? "on" : "off"),
+                            new JProperty("LED7", ((inputs & 1 << PiFaceDigital2.LED7) != 0) ? "on" : "off")
                             )),
                     new JProperty("Switch",
                         new JObject(
-                            new JProperty("0", ((inputs & 1 << PiFaceDigital2.SW0) == 0) ? "on" : "off"),
-                            new JProperty("1", ((inputs & 1 << PiFaceDigital2.SW1) == 0) ? "on" : "off"),
-                            new JProperty("2", ((inputs & 1 << PiFaceDigital2.SW2) == 0) ? "on" : "off"),
-                            new JProperty("3", ((inputs & 1 << PiFaceDigital2.SW3) == 0) ? "on" : "off")
+                            new JProperty("SW0", ((inputs & 1 << PiFaceDigital2.SW0) == 0) ? "on" : "off"),
+                            new JProperty("SW1", ((inputs & 1 << PiFaceDigital2.SW1) == 0) ? "on" : "off"),
+                            new JProperty("SW2", ((inputs & 1 << PiFaceDigital2.SW2) == 0) ? "on" : "off"),
+                            new JProperty("SW3", ((inputs & 1 << PiFaceDigital2.SW3) == 0) ? "on" : "off")
                             )));
 
                 return status.ToString();
